@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>토지이음 PNU 주소검색</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Pretendard, "Noto Sans KR", "Malgun Gothic", sans-serif;
+      color: #142033;
+      background: #eef3f8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 48px 20px;
+    }
+
+    .container {
+      width: min(860px, 100%);
+      margin: 0 auto;
+    }
+
+    .card {
+      overflow: hidden;
+      background: #fff;
+      border: 1px solid #d9e2ec;
+      border-radius: 18px;
+      box-shadow: 0 18px 50px rgba(42, 62, 84, 0.11);
+    }
+
+    header {
+      padding: 30px 34px 25px;
+      color: #fff;
+      background: linear-gradient(135deg, #176b5b, #0c4d62);
+    }
+
+    h1 {
+      margin: 0 0 9px;
+      font-size: clamp(24px, 4vw, 34px);
+      line-height: 1.25;
+    }
+
+    header p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.82);
+      line-height: 1.6;
+    }
+
+    form {
+      padding: 30px 34px 34px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 19px 22px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .address-search {
+      display: flex;
+      gap: 10px;
+    }
+
+    .address-search input {
+      flex: 1;
+    }
+
+    label {
+      font-size: 14px;
+      font-weight: 700;
+      color: #33475b;
+    }
+
+    label code {
+      margin-left: 5px;
+      color: #087161;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    input,
+    select {
+      width: 100%;
+      height: 46px;
+      padding: 0 13px;
+      border: 1px solid #cbd6e2;
+      border-radius: 9px;
+      outline: none;
+      background: #fff;
+      color: #142033;
+      font: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: #17826f;
+      box-shadow: 0 0 0 3px rgba(23, 130, 111, 0.12);
+    }
+
+    .hint {
+      margin: 21px 0 0;
+      padding: 14px 16px;
+      border-radius: 9px;
+      background: #f2f7f6;
+      color: #526578;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 25px;
+    }
+
+    button {
+      min-width: 180px;
+      height: 50px;
+      padding: 0 24px;
+      border: 0;
+      border-radius: 10px;
+      color: #fff;
+      background: #087161;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(8, 113, 97, 0.2);
+    }
+
+    button:hover {
+      background: #075f53;
+    }
+
+    button.secondary {
+      min-width: 128px;
+      height: 46px;
+      padding: 0 18px;
+      background: #33475b;
+      box-shadow: none;
+    }
+
+    button.secondary:hover {
+      background: #26394c;
+    }
+
+    .postcode-layer {
+      display: none;
+      width: 100%;
+      height: 470px;
+      margin-top: 12px;
+      overflow: hidden;
+      border: 1px solid #cbd6e2;
+      border-radius: 9px;
+      background: #fff;
+    }
+
+    #status {
+      color: #526578;
+      font-size: 13px;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 20px 12px;
+      }
+
+      header,
+      form {
+        padding-left: 22px;
+        padding-right: 22px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .field.full {
+        grid-column: auto;
+      }
+
+      .actions {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .address-search {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="card" aria-labelledby="page-title">
+      <header>
+        <h1 id="page-title">토지이음 열람 샘플</h1>
+        <p>주소를 검색하면 PNU를 자동으로 입력하고 토지이음 열람 페이지를 새 창으로 엽니다.</p>
+      </header>
+
+      <form id="sampleForm">
+        <div class="grid">
+          <div class="field full">
+            <label for="selectedAddress">주소</label>
+            <div class="address-search">
+              <input
+                id="selectedAddress"
+                name="selectedAddress"
+                value="대전광역시 동구 소제동 219-93"
+                placeholder="주소 검색 버튼을 눌러 주세요"
+                readonly
+              >
+              <button id="addressSearchButton" class="secondary" type="button">주소 검색</button>
+            </div>
+            <div id="postcodeLayer" class="postcode-layer" aria-label="카카오 주소 검색"></div>
+          </div>
+
+          <div class="field full">
+            <label for="pnu">필지고유번호 <code>pnu</code></label>
+            <input id="pnu" name="pnu" value="3011011300102190093" maxlength="19" inputmode="numeric" required>
+          </div>
+        </div>
+
+        <p class="hint">
+          카카오 주소 검색 결과의 건물관리번호에서 PNU를 자동으로 가져옵니다.
+          PNU를 직접 입력하거나 수정한 뒤 열 수도 있습니다.
+        </p>
+
+        <div class="actions">
+          <button type="submit">토지이음 새 창 열기</button>
+          <span id="status" role="status" aria-live="polite"></span>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="https://t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+  <script>
+    const sampleForm = document.getElementById("sampleForm");
+    const addressSearchButton = document.getElementById("addressSearchButton");
+    const selectedAddressElement = document.getElementById("selectedAddress");
+    const postcodeLayer = document.getElementById("postcodeLayer");
+    const statusElement = document.getElementById("status");
+
+    const buildPnuFromAddress = function (data) {
+      const buildingCode = (data.buildingCode || "").trim();
+      const buildingPnu = buildingCode.slice(0, 19);
+
+      if (/^\d{19}$/.test(buildingPnu)) {
+        return buildingPnu;
+      }
+
+      const bcode = (data.bcode || "").trim();
+      const jibunAddress = data.jibunAddress || data.autoJibunAddress || "";
+      const lotMatch = jibunAddress.match(/\s(산\s*)?(\d+)(?:-(\d+))?\s*$/);
+
+      if (!/^\d{10}$/.test(bcode) || !lotMatch) {
+        return "";
+      }
+
+      const mainNumber = lotMatch[2];
+      const subNumber = lotMatch[3] || "0";
+
+      if (mainNumber.length > 4 || subNumber.length > 4) {
+        return "";
+      }
+
+      const landGbn = lotMatch[1] ? "2" : "1";
+      return (
+        bcode +
+        landGbn +
+        mainNumber.padStart(4, "0") +
+        subNumber.padStart(4, "0")
+      );
+    };
+
+    addressSearchButton.addEventListener("click", function () {
+      if (!window.kakao || !window.kakao.Postcode) {
+        statusElement.textContent = "주소 검색 서비스를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.";
+        return;
+      }
+
+      postcodeLayer.replaceChildren();
+      postcodeLayer.style.display = "block";
+      statusElement.textContent = "주소를 검색한 뒤 결과를 선택해 주세요.";
+
+      new kakao.Postcode({
+        oncomplete: function (data) {
+          const selectedAddress =
+            data.jibunAddress ||
+            data.autoJibunAddress ||
+            data.roadAddress ||
+            data.address;
+          const pnu = buildPnuFromAddress(data);
+
+          selectedAddressElement.value = selectedAddress;
+          postcodeLayer.style.display = "none";
+
+          if (!/^\d{19}$/.test(pnu)) {
+            statusElement.textContent = "주소는 선택했지만 PNU를 확인할 수 없습니다. 다른 지번 주소를 선택해 주세요.";
+            return;
+          }
+
+          sampleForm.elements.pnu.value = pnu;
+          statusElement.textContent = "주소에서 PNU를 가져왔습니다.";
+        },
+        onresize: function (size) {
+          postcodeLayer.style.height = Math.min(size.height, 520) + "px";
+        },
+        width: "100%",
+        height: "100%",
+        maxSuggestItems: 5
+      }).embed(postcodeLayer, {
+        autoClose: false
+      });
+    });
+
+    sampleForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      const pnu = sampleForm.elements.pnu.value.trim();
+
+      if (!/^\d{19}$/.test(pnu)) {
+        statusElement.textContent = "PNU는 숫자 19자리로 입력해 주세요.";
+        sampleForm.elements.pnu.focus();
+        return;
+      }
+
+      const landGbn = pnu.slice(10, 11);
+
+      if (!["1", "2"].includes(landGbn)) {
+        statusElement.textContent = "PNU의 토지 구분은 1(일반) 또는 2(산)여야 합니다.";
+        sampleForm.elements.pnu.focus();
+        return;
+      }
+
+      const toLotNumber = function (value) {
+        return String(Number(value));
+      };
+
+      const popupName = "eumLandPopup";
+      const popup = window.open(
+        "",
+        popupName,
+        "width=1400,height=900,scrollbars=yes,resizable=yes"
+      );
+
+      if (!popup) {
+        statusElement.textContent = "팝업 차단을 해제한 뒤 다시 눌러 주세요.";
+        return;
+      }
+
+      popup.document.write(
+        "<!doctype html><title>토지이음 연결 중</title>" +
+        "<p style='font-family:sans-serif;padding:24px'>토지이음 열람 페이지로 연결 중입니다...</p>"
+      );
+      popup.document.close();
+
+      const postForm = document.createElement("form");
+      postForm.method = "POST";
+      postForm.action = "https://www.eum.go.kr/web/ar/lu/luLandDet.jsp";
+      postForm.target = popupName;
+      postForm.hidden = true;
+
+      const data = {
+        selGbn: "umd",
+        isNoScr: "script",
+        s_type: "1",
+        mode: "search",
+        add: "land",
+        pnu: pnu,
+        selSido: pnu.slice(0, 2),
+        selSgg: pnu.slice(2, 5),
+        selUmd: pnu.slice(5, 8).padStart(4, "0"),
+        selRi: pnu.slice(8, 10),
+        landGbn: landGbn,
+        bobn: toLotNumber(pnu.slice(11, 15)),
+        bubn: toLotNumber(pnu.slice(15, 19))
+      };
+
+      Object.entries(data).forEach(function ([name, value]) {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = name;
+        input.value = value;
+        postForm.appendChild(input);
+      });
+
+      document.body.appendChild(postForm);
+      postForm.submit();
+      postForm.remove();
+
+      statusElement.textContent = "새 창으로 전송했습니다.";
+    });
+  </script>
+</body>
+</html>
