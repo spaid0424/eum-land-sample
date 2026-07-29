@@ -173,6 +173,74 @@
       background: #fff;
     }
 
+    .parameter-help {
+      grid-column: 1 / -1;
+      margin-top: 3px;
+      overflow: hidden;
+      border: 1px solid #d9e2ec;
+      border-radius: 10px;
+      background: #f8fafc;
+    }
+
+    .parameter-help h2 {
+      margin: 0;
+      padding: 14px 16px;
+      border-bottom: 1px solid #d9e2ec;
+      color: #33475b;
+      font-size: 14px;
+    }
+
+    .parameter-table-wrap {
+      overflow-x: auto;
+    }
+
+    .parameter-help table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .parameter-help th,
+    .parameter-help td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5ebf1;
+      text-align: left;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    .parameter-help th {
+      color: #526578;
+      background: #f2f6f9;
+      font-weight: 700;
+    }
+
+    .parameter-help td:nth-child(2) {
+      width: 100%;
+      white-space: normal;
+    }
+
+    .parameter-help code {
+      color: #087161;
+      font-family: Consolas, monospace;
+      font-weight: 700;
+    }
+
+    .parameter-value {
+      color: #142033;
+      font-family: Consolas, monospace;
+      font-weight: 700;
+    }
+
+    .fixed-parameters {
+      margin: 0;
+      padding: 12px 16px;
+      color: #526578;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
     #status {
       color: #526578;
       font-size: 13px;
@@ -242,6 +310,83 @@
             <label for="pnu">필지고유번호 <code>pnu</code></label>
             <input id="pnu" name="pnu" value="3011011300102190093" maxlength="19" inputmode="numeric" required>
           </div>
+
+          <section class="parameter-help" aria-labelledby="parameter-title">
+            <h2 id="parameter-title">토지이음 POST 전송 파라미터</h2>
+            <div class="parameter-table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>파라미터</th>
+                    <th>설명</th>
+                    <th>PNU 자리</th>
+                    <th>전송값</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>pnu</code></td>
+                    <td>필지고유번호 전체</td>
+                    <td>1~19</td>
+                    <td><span id="valuePnu" class="parameter-value"></span></td>
+                  </tr>
+                  <tr>
+                    <td><code>selSido</code></td>
+                    <td>시·도 코드</td>
+                    <td>1~2</td>
+                    <td><span id="valueSelSido" class="parameter-value"></span></td>
+                  </tr>
+                  <tr>
+                    <td><code>selSgg</code></td>
+                    <td>시·군·구 코드</td>
+                    <td>3~5</td>
+                    <td><span id="valueSelSgg" class="parameter-value"></span></td>
+                  </tr>
+                  <tr>
+                    <td><code>selUmd</code></td>
+                    <td>읍·면·동 코드(전송 시 앞에 0을 붙여 4자리로 구성)</td>
+                    <td>6~8</td>
+                    <td><span id="valueSelUmd" class="parameter-value"></span></td>
+                  </tr>
+                  <tr>
+                    <td><code>selRi</code></td>
+                    <td>리 코드</td>
+                    <td>9~10</td>
+                    <td><span id="valueSelRi" class="parameter-value"></span></td>
+                  </tr>
+                  <tr>
+                    <td><code>landGbn</code></td>
+                    <td>토지 구분: 1은 일반, 2는 산</td>
+                    <td>11</td>
+                    <td><span id="valueLandGbn" class="parameter-value"></span></td>
+                  </tr>
+                  <tr>
+                    <td><code>bobn</code></td>
+                    <td>본번(앞쪽 0 제거)</td>
+                    <td>12~15</td>
+                    <td><span id="valueBobn" class="parameter-value"></span></td>
+                  </tr>
+                  <tr>
+                    <td><code>bubn</code></td>
+                    <td>부번(앞쪽 0 제거)</td>
+                    <td>16~19</td>
+                    <td><span id="valueBubn" class="parameter-value"></span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="fixed-parameters">
+              전송 URL:
+              <code>https://www.eum.go.kr/web/ar/lu/luLandDet.jsp</code><br>
+              요청 방식: <code>POST</code> · 전송 대상: <code>새 창</code><br>
+              고정값:
+              <code>selGbn=umd</code>,
+              <code>isNoScr=script</code>,
+              <code>s_type=1</code>,
+              <code>mode=search</code>,
+              <code>add=land</code>
+            </p>
+          </section>
         </div>
 
         <p class="hint">
@@ -264,6 +409,41 @@
     const selectedAddressElement = document.getElementById("selectedAddress");
     const postcodeLayer = document.getElementById("postcodeLayer");
     const statusElement = document.getElementById("status");
+    const parameterValueElements = {
+      pnu: document.getElementById("valuePnu"),
+      selSido: document.getElementById("valueSelSido"),
+      selSgg: document.getElementById("valueSelSgg"),
+      selUmd: document.getElementById("valueSelUmd"),
+      selRi: document.getElementById("valueSelRi"),
+      landGbn: document.getElementById("valueLandGbn"),
+      bobn: document.getElementById("valueBobn"),
+      bubn: document.getElementById("valueBubn")
+    };
+
+    const updateParameterPreview = function () {
+      const pnu = sampleForm.elements.pnu.value.trim();
+      const isValidPnu = /^\d{19}$/.test(pnu);
+      const emptyValue = "—";
+      const values = isValidPnu
+        ? {
+            pnu: pnu,
+            selSido: pnu.slice(0, 2),
+            selSgg: pnu.slice(2, 5),
+            selUmd: pnu.slice(5, 8).padStart(4, "0"),
+            selRi: pnu.slice(8, 10),
+            landGbn: pnu.slice(10, 11),
+            bobn: String(Number(pnu.slice(11, 15))),
+            bubn: String(Number(pnu.slice(15, 19)))
+          }
+        : {};
+
+      Object.entries(parameterValueElements).forEach(function ([name, element]) {
+        element.textContent = values[name] || emptyValue;
+      });
+    };
+
+    sampleForm.elements.pnu.addEventListener("input", updateParameterPreview);
+    updateParameterPreview();
 
     const buildPnuFromAddress = function (data) {
       const buildingCode = (data.buildingCode || "").trim();
@@ -325,6 +505,7 @@
           }
 
           sampleForm.elements.pnu.value = pnu;
+          updateParameterPreview();
           statusElement.textContent = "주소에서 PNU를 가져왔습니다.";
         },
         onresize: function (size) {
