@@ -546,7 +546,7 @@
       const popup = window.open(
         "",
         popupName,
-        "width=1400,height=900,scrollbars=yes,resizable=yes"
+        "popup=yes,width=1400,height=900,scrollbars=yes,resizable=yes"
       );
 
       if (!popup) {
@@ -554,11 +554,8 @@
         return;
       }
 
-      popup.document.write(
-        "<!doctype html><title>토지이음 연결 중</title>" +
-        "<p style='font-family:sans-serif;padding:24px'>토지이음 열람 페이지로 연결 중입니다...</p>"
-      );
-      popup.document.close();
+      popup.blur();
+      window.focus();
 
       const postForm = document.createElement("form");
       postForm.method = "POST";
@@ -594,7 +591,34 @@
       postForm.submit();
       postForm.remove();
 
-      statusElement.textContent = "새 창으로 전송했습니다.";
+      statusElement.textContent = "토지이음 페이지를 준비하고 있습니다.";
+
+      let focusAttempts = 0;
+      const focusWhenNavigated = window.setInterval(function () {
+        focusAttempts += 1;
+        let hasNavigated = false;
+
+        if (popup.closed) {
+          window.clearInterval(focusWhenNavigated);
+          return;
+        }
+
+        try {
+          hasNavigated = popup.location.href !== "about:blank";
+        } catch (error) {
+          hasNavigated = true;
+        }
+
+        if (hasNavigated || focusAttempts >= 120) {
+          window.clearInterval(focusWhenNavigated);
+          window.setTimeout(function () {
+            if (!popup.closed) {
+              popup.focus();
+              statusElement.textContent = "토지이음 페이지를 새 창으로 열었습니다.";
+            }
+          }, hasNavigated ? 300 : 0);
+        }
+      }, 50);
     });
   </script>
 </body>
